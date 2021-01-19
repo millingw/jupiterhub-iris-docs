@@ -5,6 +5,7 @@
 
 JupyterHub Documentation
 ===========================================
+Repository to include notes related with deploying JupyterHub.
 
 
 Another simple header
