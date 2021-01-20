@@ -7,19 +7,18 @@ JupyterHub Documentation
 ===========================================
 Repository to include notes related with deploying JupyterHub.
 
-
-Another simple header
-=====================
-
-Some text.::
-
-    print 'hello'
-    >> hello
+.. Bare metal deployment
+   =====================
+   Some text.::
+   
+       print 'hello'
+       >> hello
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
    
+   bare-metal
    license
    help
 
