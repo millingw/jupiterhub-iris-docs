@@ -34,3 +34,25 @@ The main steps are:
 
 
 There is an ansible script available to try to automatize this process.
+
+Installing Anaconda
+-------------------
+The first step is making sure that conda>4.8.3 is available in the system. If not we 
+do this download and install miniconda to provide it.
+
+tasks/main.yml:
+
+.. literalinclude:: scripts/ansible/playbook/roles/miniconda/tasks/main.yml
+  :language: ruby
+
+Where the different variables are defined in *defaults* and *vars*:
+
+defaults/main.yml
+
+.. literalinclude:: scripts/ansible/playbook/roles/miniconda/defaults/main.yml
+  :language: ruby
+
+vars/main.yml
+
+.. literalinclude:: scripts/ansible/playbook/roles/miniconda/vars/main.yml
+  :language: ruby
