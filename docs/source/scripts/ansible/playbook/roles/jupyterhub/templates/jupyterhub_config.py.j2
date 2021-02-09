@@ -1,0 +1,9 @@
+c.Application.log_level = 10
+# By commenting out the authenticator class 
+# jupyterhub falls back to using PAM
+#c.JupyterHub.authenticator_class = 'jhub_remote_user_authenticator.remote_user_auth.RemoteUserLocalAuthenticator'
+c.ConfigurableHTTPProxy.command = '/opt/jupyterhub/bin/configurable-http-proxy'
+c.JupyterHub.spawner_class = 'sudospawner.SudoSpawner'
+c.SudoSpawner.sudospawner_path = '/opt/jupyterhub/bin/sudospawner'
+# Make JupyterLab the default
+c.Spawner.default_url = '/lab'
