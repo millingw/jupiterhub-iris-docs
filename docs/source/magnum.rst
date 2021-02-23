@@ -43,12 +43,76 @@ Install helm by following the instructions at https://zero-to-jupyterhub.readthe
 Confirm that helm is correctly installed:: 
 
   helm --list
+  
+  
+Create default persistent volume
+--------------------------------
+Some applications, such as postgres, need a default StorageClass to be present in order to install successfully. 
+
+The setup for different systems will be dependent on the type of storage system used. You will need to contact your system support for precise details of this.
+
+For the Cumulus system, which uses cinder for storage, the following definition can be used::
+
+  kind: StorageClass
+  apiVersion: storage.k8s.io/v1
+  metadata:
+    name: standard
+    annotations:
+      storageclass.kubernetes.io/is-default-class: "true"
+  provisioner: kubernetes.io/cinder
+  parameters:
+    availability: nova
+
+Save this into a file called storage.yaml, and run the following command::
+
+  kubectl apply -f storage.yaml 
+  
+Run the following command to verify that a default storage class has been created. The output should be similar to what is shown below::
+
+  kubectl get storageclass
+  NAME                 PROVISIONER            RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
+  standard (default)   kubernetes.io/cinder   Delete          Immediate           false                  2d18h
+
+
+
+  
+  
 
 Install and configure JupyterHub
 --------------------------------
+
+postgresql is required to allow JupyterHub to use persistence. Execute the following to add the bitnami repository in order to access the postgresql charts::
+
+  helm repo add bitnami https://charts.bitnami.com/bitnami
+  helm repo update
+
+Execute the following to create a jhub namespace containing a postgresql instance::
+
+  helm install postgresql --namespace=jhub --create-namespace bitnami/postgresql --set persistence.size=1Gi
+  
+The installation will automatically create a postgresql password. This can be obtained by executing the following::
+
+  kubectl get secret --namespace jhub postgresql -o jsonpath="{.data.postgresql-password}" | base64 --decode
+  
+Postgresql requires some initial setup before it can be used by JupyterHub. Connect to the running instance by executing the following::
+
+  kubectl run postgresql-client --rm --tty -i --restart='Never' --namespace jhub --image docker.io/bitnami/postgresql:11.11.0-debian-10-r0 --env="PGPASSWORD=$POSTGRES_PASSWORD" --command -- psql --host postgresql -U postgres -d postgres -p 5432
+  
+Copy and paste the password that was output from the "get secret" command above, and press enter. This will log you into the postgresql instance.
+
+Once logged in, run the following commands to create the JupyterHub database in postgresql::
+
+  CREATE DATABASE jhub;
+  CREATE USER jhub;
+  GRANT ALL ON DATABASE jhub TO jhub;
+
+Then exit from postgresql by entering quit and pressing return
+
 To install JupyterHub, follow the instructions at https://zero-to-jupyterhub.readthedocs.io/en/latest/jupyterhub/index.html
 
-JupyterHub provides many options for user environments and persistent storage. The simplest setup is to use an in-memory database ("sqlite-memory"), which means that user resources will not persist between sessions (when they log out, everything is wiped).
+Note that as we have already created the jhub namespace during the postgresql installation, the --create-namespace flag should not be provided during the JupyterHub installation
+
+JupyterHub provides many options for user environments and persistent storage. Here we will use our postgresql instance for persistence.
 
 Note that JupyterHub is sensitive to differences in versions between the installed hub component of JupyterHub and the version of the hub component used to build the docker image specified in the config.yaml file. 
 The following config file was successfully used for installation using helm chart version=0.9.0 and a compatible version of the jupyter datascience-notebook image:: 
@@ -57,13 +121,13 @@ The following config file was successfully used for installation using helm char
     secretToken: <insert your value>
   hub:
     db:
-      type: sqlite-memory
+      type: postgresql
   singleuser:
     image:
       name: jupyter/datascience-notebook
       tag: hub-1.1.0
     storage:
-      type: sqlite-memory
+      type: postgresql
 
 kubectl can then be used to verify that JupyterHub is running and accessible (assuming that you specified jhub as the namespace during installation)::
 
@@ -144,6 +208,9 @@ This will provision a single namespace containing a dask instance, a JupyterHub 
 Follow the instructions https://docs.dask.org/en/latest/setup/kubernetes-helm.html#helm-install-dask-for-mulitple-users
 
 This will provision a single namespace containing a dask instance, a JupyterHub instance, a shared external load balancer and access to dask only via the JupyterHub instance.
+
+Follow the previous instructions to create a dhub namespace containing a postgresql instance, and set up the postgresql database.
+
 Important note: as written, the instructions will install into the default namespace. This is very unadvisable! When following the installation instructions, specify a namespace for your installation, eg to install into a dhub namespace::
 
   helm upgrade --debug --wait --namespace dhub --create-namespace --install --render-subchart-notes  dhub dask/daskhub     --values=secrets.yaml
@@ -158,10 +225,10 @@ An example secrets.yaml file::
         dask-gateway:
           apiToken: <token2>
       db:
-        type: sqlite-memory
+        type: postgresql
     singleuser:
       storage:
-        type: sqlite-memory
+        type: postgresql
 
   dask-gateway:
     gateway:
@@ -200,4 +267,5 @@ There is now no need to specify an address, as the notebook will default to usin
     print('done')
   except Exception as e:
     print(e)
+
 
