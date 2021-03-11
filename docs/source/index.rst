@@ -20,6 +20,7 @@ Repository to include notes related with deploying JupyterHub.
    
    bare-metal
    magnum
+   customisation
    license
    help
 
