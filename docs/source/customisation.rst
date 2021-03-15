@@ -131,7 +131,7 @@ If we are using helm chart to deploy JupyterHub we can do this in the values.yml
                 "large": ("8G", 4.0),
               }
               flavour = str(formdata.get('flavour', [''])[0])
-              options['mem'],options['cpu'] = flavours.get(flavour, flavours[1])
+              options['mem'],options['cpu'] = flavours.get(flavour, flavours['medium'])
               return options
             @gen.coroutine
             def options_form(self, spawner):
