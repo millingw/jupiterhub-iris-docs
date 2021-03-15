@@ -34,6 +34,35 @@ If we are using helm chart to deploy JupyterHub we might specify our new image i
         tag: 0.1.2
     ...
 
+Custom Hub Image
+----------------
+Customising the hub image is not always required, but may be useful if we want to modify the templates to change the look and feel of JupyterHub, or include additional content. For example we might want to customise the login page template to add terms and conditions for accessing the service.
+
+This example Dockerfile replaces the login page template with a custom version::
+
+    FROM jupyterhub/k8s-hub:0.8.2
+
+    USER root
+    RUN mkdir /usr/local/share/jupyterhub/custom_templates 
+    COPY login.html /usr/local/share/jupyterhub/custom_templates
+    USER $NB_UID
+
+We could then build this and push it to a suitable docker repository using something like the following::
+
+    $ docker build .
+    $ docker tag 019a31f72196 my-repo/my-hub:0.8.2
+    $ docker push my-repo/my-hub:0.8.2
+
+If we are using helm chart to deploy JupyterHub we might specify our new image in the values.yml file like this::
+
+    ...
+    hub:
+      image:
+        name: my-repo/my-hub
+        tag: 0.1.2
+    ...
+
+
 User Image Selection
 --------------------
 We might want to allow a user to select from a range of notebook images. This is possible by overriding the KubeSpawner class.
