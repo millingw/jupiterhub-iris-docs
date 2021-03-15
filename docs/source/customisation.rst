@@ -59,7 +59,7 @@ If we are using helm chart to deploy JupyterHub we might specify our new image i
     hub:
       image:
         name: my-repo/my-hub
-        tag: 0.1.2
+        tag: 0.8.2
     ...
 
 
