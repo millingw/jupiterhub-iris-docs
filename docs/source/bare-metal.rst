@@ -1,6 +1,6 @@
 Bare metal
 ==========
-JupyterHub can be deployed in bare metal systems. This is the way is was done by the
+JupyterHub can be deployed in bare metal systems. This is the way it was done by the
 Gravity Exploration Institute at Cardiff University to make a set of Python 
 environments (3.6, 3.7 and 3.8) available to its users.
 
@@ -29,7 +29,7 @@ The main steps are:
 #. Create JupyterHub's static kernels
 #. Provision the kernels with the required environments
 #. Create a suitable script to start JupyertHub
-#. Obtionally create a suitable logo to display in JupyertHub
+#. Optionally create a suitable logo to display in JupyertHub
 #. Start the JupyterHub service
 
 
@@ -37,8 +37,8 @@ There is an ansible script available to try to automatize this process.
 
 Installing Anaconda
 -------------------
-The first step is making sure that conda>4.8.3 is available in the system. If not we 
-do this download and install miniconda to provide it.
+The first step is making sure that conda>4.8.3 is available in the system or download
+and install otherwise:
 
 miniconda/tasks/main.yml:
 
@@ -59,7 +59,7 @@ miniconda/vars/main.yml
 
 Installing other dependencies
 -----------------------------
-Depending on the Linux distribution used the way to installed the rest of 
+Depending on the Linux distribution used, the way to install the rest of 
 dependencies may vary. This guide has been tested in Centos 7.
 
 In this step we install (in case they are not already available):
@@ -89,7 +89,7 @@ jupyterhub/templates/jupyterhub_config.py.j2
 
 .. literalinclude:: scripts/ansible/playbook/roles/jupyterhub/templates/jupyterhub_config.py.j2
 
-As mentioned, by commenting out the authenticator class jupyterhub falls back to 
+As mentioned, by commenting out the authenticator class JupyterHub falls back to 
 using PAM authentication method.
 
 Spawner
@@ -98,7 +98,7 @@ Ligo uses a Custom Spawners for JupyterHub (SudoSpawner) to start each single-us
 notebook server. This spawner enables JupyterHub to run without being root, by 
 spawning an intermediate process via sudo. This seems like a sensible choice to 
 improve system security. In JupyterHub configuration file this is controlled with 
-**sudospawner_path**. Besides this, SudoSpawner requires seting up the user that
+**sudospawner_path**. Besides this, SudoSpawner requires setting up the user that
 will actually run the Hub and define which commands is it allowed to execute on 
 behalf of users. This is done via a couple of configuration files:
 
@@ -121,7 +121,7 @@ jupyterhub/templates/jupyterhub.sudofile.j2
 Defaults
 --------
 It is useful to define default values for some of the parameters used in our 
-configuration files. Being stored in a separate file might faciliate to adapt these
+configuration files. Being stored in a separate file might facilitate to adapt these
 templates for different cases.
 
 jupyterhub/defaults/main.yml
