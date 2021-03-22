@@ -92,6 +92,64 @@ jupyterhub/templates/jupyterhub_config.py.j2
 As mentioned, by commenting out the authenticator class JupyterHub falls back to 
 using PAM authentication method.
 
+IRIS IAM
+^^^^^^^^^^^^^^
+It is possible to authenticate using IRIS IAM. For this some changes and additional
+packages are required. 
+
+* **Dependencies**: OAuth should be installed using pip. This can be added to the
+  original conda environment definition: 
+
+  jupyterhub/files/jupyterhub-environment-iris-iam.yml
+
+  .. literalinclude:: scripts/ansible/playbook/roles/jupyterhub/files/jupyterhub-environment-iris-iam.yml
+
+* **Client registration**: JupyterHub needs to be registered as a IAM client on `IRIS IAM <https://iris-iam.stfc.ac.uk/>`_
+  
+  .. image:: figures/baremetal/iris-iam-dashboard.png
+
+  From here follow the instructions in the `INDIGO IAM <https://indigo-iam.github.io/docs/v/current/user-guide/client-registration.html>`_ documentation site. You will 
+  need to enter the public IP address and port of the server running JupyterHub in
+  the *Redirect URI(s)* field.
+  
+  Make sure to save the client credentials for your client as they will allow you to
+  modify its settings later on and configure JupyterHub.
+
+* **JupyterHub configuration**: The *GenericOAuthenticator* method is used to 
+  interact with IRIS IAM and requires configuring a few settings including the client
+  id and client secret provided in the previous step. We also need to provide the 
+  address to which the user will be redirected after successful authentication
+  (this address needs match to one defined during the client registration step).
+  
+  IAM authentication requires defining a few environment variables and make them
+  visible by JupyterHub. In our current setup the JupyterHub user, jupyterhub, is a
+  nologin non-interactive user and one way to define these environment variables is
+  to add them in the JupyterHub configuration file using the *os* module.
+
+  Another thing to keep in mind is that our current setup requires the authenticated
+  user to have a matching account in the system running JupyterHub. This is, if user
+  "John" authenticates in IRIS IAM, JupyterHub's spawner (sudospawner in our current
+  case) will try to start a Jupyter server for user "John" in the local system 
+  failing if the user cannot be found.
+
+  .. literalinclude:: scripts/ansible/playbook/roles/jupyterhub/templates/jupyterhub_config_iris_iam.py.j2
+
+After configuration, the user would navigate to the JupyterHub's server address and
+be greeted by a message like:
+
+.. image:: figures/baremetal/iris-iam-jh-sign-in.png
+
+And then the user should be redirected to IRIS IAM login website:
+
+.. image:: figures/baremetal/iris-iam-sign-in.png
+
+Our client needs to be approved by the user the first time it is used by that user.
+After authorization the user should be redirected to the Jupyter server spawned by
+the Hub.
+
+.. image:: figures/baremetal/iris-iam-approval.png
+
+
 Spawner
 -------
 Ligo uses a Custom Spawners for JupyterHub (SudoSpawner) to start each single-user 
