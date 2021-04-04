@@ -43,12 +43,12 @@
 # SUDOSPAWNER SETUP
 # seems like this is not really needed because sudospawner is installed as part
 # of conda and everybody as permissions to execute it??
-- name: create Jupyterhub group for sudospawner
+- name: create jupyterhub group for sudospawner
   group:
     name: "{{ jupyter_server_sudo_group }}"
     state: present
 
-- name: create Jupyterhub user
+- name: create jupyterhub user
   user:
     name: "{{ jupyter_server_user }}"
     comment: "jupyterhub server user"
@@ -84,7 +84,7 @@
     group: "{{ jupyter_server_sudo_group }}"
     mode: "0775"
 
-- name: copy Jupyter config file over
+- name: copy jupyterhub config file over
   template:
     src: jupyterhub_config.py.j2
     dest: "{{ jupyterhub_config_directory }}/jupyterhub_config.py"

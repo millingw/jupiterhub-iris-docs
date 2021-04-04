@@ -10,7 +10,7 @@ combination of pip/conda.
 
 The main steps are:
 
-#. Install JupuyterHub dependencies:
+#. Install JupyterHub dependencies:
 
    * Nodejs
    * npm
@@ -28,8 +28,8 @@ The main steps are:
 #. Create JupyterHub's httpd configuration file
 #. Create JupyterHub's static kernels
 #. Provision the kernels with the required environments
-#. Create a suitable script to start JupyertHub
-#. Optionally create a suitable logo to display in JupyertHub
+#. Create a suitable script to start JupyterHub
+#. Optionally create a suitable logo to display in JupyterHub
 #. Start the JupyterHub service
 
 
