@@ -132,6 +132,15 @@ packages are required.
   case) will try to start a Jupyter server for user "John" in the local system 
   failing if the user cannot be found.
 
+  It is further possible to filter users by their IAM group by using the
+  *allowed_groups* option. For example, we can specify that only users part of the
+  *jupyterhub-da/stfccloud* group to have access to our hub. **NOTE** Please note
+  that **allowed_groups**, together with other options described in
+  `OAuthenticator <https://github.com/jupyterhub/oauthenticator/tree/master/examples/generic>`_
+  website, are not yet supported in the latest (0.13.0 as of yet) OAuthenticator
+  release, so we need to use the master branch in GitHub, this might change in future
+  releases.
+
   .. literalinclude:: scripts/ansible/playbook/roles/jupyterhub/templates/jupyterhub_config_iris_iam.py.j2
 
 After configuration, the user would navigate to the JupyterHub's server address and
