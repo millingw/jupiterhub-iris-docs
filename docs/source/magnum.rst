@@ -25,9 +25,20 @@ To provision a new cluster, first log into the Horizon interface on the IRIS clo
     * Cluster creation may take some time. Clusters can be viewed by navigating to "Container Infra->Clusters"
     * Once creation is complete, the compute instances within the cluster can be listed by navigating to "Compute"->"Instances". 
     * The cluster master node can be identified by a name <..>-master-0 or similar. 
-
+    
+    
 To log into the master node via ssh, you will need to allocate an external floating point ip address.
-This may differ from system to system, depending on the local configuration of the firewall; you may need to contact your system support to request that the firewall be opened for ingress on the address that you have allocated to your master node.
+Navigate Horizon->Instances to find your master node. Under "Actions" select "Associate Floating IP".
+Either select an existing unassociated floating ip address, or click "+" to allocate a new address.
+
+
+Firewall
+--------
+On the Cumulus cloud, external floaing ip addresses are automatically opened for ingress through the firewall.
+On the STFC cloud, you will need to contact the system support to request that the firewall be opened for ingress on the ip address that you have just allocated to your master node.
+Similarly, when deploying kubernetes services via helm, there are differences in firewall behaviour between the clouds. 
+On Cumulus, external floating ip addresses are automatically obtained for kubernetes services that require them.
+On the STFC cloud, externally accessible services require to be configured with existing floating ip addresses that have already been configured for ingress.
 
 Install helm
 ------------
@@ -128,6 +139,22 @@ The following config file was successfully used for installation using helm char
       tag: hub-1.1.0
     storage:
       type: postgresql
+      
+Note that if you are installing on the STFC cloud, you will require to specify an existing floating ip address for the external load balancer, for example::
+  
+   proxy:
+      secretToken: <insert your value>
+      service:
+        loadBalancerIP: 130.246.212.235
+    hub:
+      db:
+        type: postgresql
+    singleuser:
+      image:
+        name: jupyter/datascience-notebook
+        tag: hub-1.1.0
+      storage:
+      type: postgresql
 
 kubectl can then be used to verify that JupyterHub is running and accessible (assuming that you specified jhub as the namespace during installation)::
 
@@ -137,31 +164,49 @@ kubectl can then be used to verify that JupyterHub is running and accessible (as
   proxy-api      ClusterIP      10.254.104.162   <none>            8001/TCP                     112s
   proxy-public   LoadBalancer   10.254.102.185   128.232.227.148   443:31962/TCP,80:30774/TCP   112s
 
-(Note that depending on how the firewall is configured for your system, JupyterHub may not be able to automatically acquire an external ip address, and the load balancer will show as "Pending" for its EXTERNAL-IP. If this is the case, then you will need to manually allocate a new floating ip address via Horizon, and request that this address be opened for ingress.) 
-
-This address can then be specified on the config file as follows, and jupyterhub redeployed using helm as per the zero-to-jupyterhub documentation::
-
-  proxy:
-    service:
-      loadBalancerIP: <your external IP address here>
-
 You should then be able to browse to the external address shown for the LoadBalancer, and start to create notebooks.
+
+Authentication and authorisation
+--------------------------------
+Note that these instructions will install JupyterHub without any authentication or authorisation; anyone with access to the load balancer IP address can create notebooks. Clearly this is undesirable.
+A simple way to implement user control is to configure OIDC via github, and require that users have a github account and are members of a github organisation for which you have management privileges.
+Follow the instructions at https://zero-to-jupyterhub.readthedocs.io/en/stable/administrator/authentication.html#github to set up a new OAuth app in github. The callback URL is the external IP address for your Jupter load balancer.
+Add the following to your JupyterHub config.xml, where clientId, clientSecret and oauth_callback_url should match the values you have configured in the OAuth app in github.
+Add a list of github organisations of which a user must be a member of at least one for access::
+
+auth:
+  type: github
+  github:
+    clientId: ***
+    clientSecret: ***
+    oauth_callback_url: <your load balancer ip address>/hub/oauth_callback
+    allowed_organisations:
+    - <your github organisation 1>
+    - <your github organisation 1>
+
 
 Dask
 ----
 Dask provides a powerful framework allowing parallel processing and automated scaling accessed from a lightweight python notebook. dask-gateway provides a set of services that can be easily installed onto kubernetes using helm. dask-gateway can be installed either as a standalone service or tightly integrated with an instance of JupyterHub.
 
-For standalone installation, follow the instructions at https://gateway.dask.org/install-kube.html#install-dask-gateway, using the default config file at https://github.com/dask/dask-gateway/blob/master/resources/helm/dask-gateway/values.yaml
-Dask will automatically try to acquire an external floating ip address for it's load balancer. This can be listed using kubectl, eg::
+For standalone installation, follow the instructions at https://gateway.dask.org/install-kube.html#install-dask-gateway, based on the default config file at https://github.com/dask/dask-gateway/blob/master/resources/helm/dask-gateway/values.yaml
+If you are installing on Cumulus, Dask will automatically try to acquire an external floating ip address for it's load balancer. This can be listed using kubectl, eg::
 
   kubectl get service --namespace dask-gateway
   NAME                   TYPE           CLUSTER-IP      EXTERNAL-IP       PORT(S)        AGE
   api-dask-gateway       ClusterIP      10.254.61.172   <none>            8000/TCP       3h55m
   traefik-dask-gateway   LoadBalancer   10.254.138.19   128.232.227.222   80:31454/TCP   3h55m
 
-If your firewall does not automatically allow ingress for new floating ip addresses, you will need to contact your cloud support for advice on how to obtain a new address and request ingress. You will then need to reinstall dask specifying your new floating ip address as the address of the load balancer.
+If you are installing on the STFC cloud, you will need to manually specify an existing floating ip address in your config file, e.g. ::
+  
+  # Additional configuration for the traefik service
+  service:
+      type: LoadBalancer
+      annotations: {}
+      spec: { externalIPs: [130.246.212.201] } 
 
-Your dask installation can be tested by creating a new Jupyter notebook, then running a simple dask task from within it.
+  
+Your dask installation can be tested by browsing to the external ip address shown for your load balancer and creating a new Jupyter notebook, then running a simple dask task from within it.
 Note that dask is sensitive to mismatches in versions between libraries on the worker images and in the calling client.
 The dask_gateway client provides a get_versions method which checks for any potential mismatches.
 
@@ -267,5 +312,4 @@ There is now no need to specify an address, as the notebook will default to usin
     print('done')
   except Exception as e:
     print(e)
-
 
