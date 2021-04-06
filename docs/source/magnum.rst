@@ -169,20 +169,24 @@ You should then be able to browse to the external address shown for the LoadBala
 Authentication and authorisation
 --------------------------------
 Note that these instructions will install JupyterHub without any authentication or authorisation; anyone with access to the load balancer IP address can create notebooks. Clearly this is undesirable.
-A simple way to implement user control is to configure OIDC via github, and require that users have a github account and are members of a github organisation for which you have management privileges.
-Follow the instructions at https://zero-to-jupyterhub.readthedocs.io/en/stable/administrator/authentication.html#github to set up a new OAuth app in github. The callback URL is the external IP address for your Jupter load balancer.
-Add the following to your JupyterHub config.xml, where clientId, clientSecret and oauth_callback_url should match the values you have configured in the OAuth app in github.
-Add a list of github organisations of which a user must be a member of at least one for access::
 
-auth:
-  type: github
-  github:
-    clientId: ***
-    clientSecret: ***
-    oauth_callback_url: <your load balancer ip address>/hub/oauth_callback
-    allowed_organisations:
-    - <your github organisation 1>
-    - <your github organisation 1>
+A simple way to implement user control is to configure OIDC via github, and require that users have a github account and are members of a github organisation for which you have management privileges.
+
+Follow the instructions at https://zero-to-jupyterhub.readthedocs.io/en/stable/administrator/authentication.html#github to set up a new OAuth app in github. The callback url required in the OAuth app setup is the external IP address for your Jupter load balancer.
+
+Add the following to your JupyterHub config.xml, where clientId, clientSecret and oauth_callback_url should match the values you have configured in the OAuth app in github.
+
+You should include a list of github organisations of which a user must be member of at least one for access::
+
+ auth:
+   type: github
+   github:
+     clientId: ***
+     clientSecret: ***
+     oauth_callback_url: <your load balancer ip address>/hub/oauth_callback
+     allowed_organisations:
+       - <your github organisation 1>
+       - <your github organisation 2 etc>
 
 
 Dask
